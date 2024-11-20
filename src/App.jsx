@@ -1,70 +1,57 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Leva, useControls } from 'leva';
-import Game from './Game';
-import { getConnectedGroups } from './utils/helpers';
 import { connectedWords } from './data/data.js';
+import Game from './Game';
 import styles from './styles.module.scss';
 
-const isSmallScreen = window.innerWidth <= 768;
-
 const App = () => {
+  const isSmallScreen = window.innerWidth <= 768;
+
+  // Leva configuration
   const { groupSize } = useControls({ groupSize: { value: 2, min: 2, max: 4, step: 1 } });
   const { itemCount } = useControls({ itemCount: { value: 8, min: 4, max: 12, step: 1 } });
   const { columns } = useControls({
-    columns: { value: 4, min: 2, max: 4, step: 1, disabled: isSmallScreen },
+    columns: { value: 2, min: 2, max: 4, step: 1, disabled: isSmallScreen },
   });
 
-  const [itemGroups, setItemGroups] = useState([]);
   const [allItems, setAllItems] = useState([]);
+  const [itemGroups, setItemGroups] = useState([]);
 
+  // Resets the game when group size or item count changes
   const resetGame = useCallback(() => {
-    const selectedGroups = connectedWords.get(groupSize);
-    if (!selectedGroups) return; 
-    const shuffledItems = selectedGroups
-      .slice(0, itemCount)
-      .map(group => [...group]) 
-      .flat(); 
-    shuffledItems.sort(() => Math.random() - 0.5);
-    setItemGroups(shuffledItems);
-    setAllItems(shuffledItems);
-  }, [itemCount, groupSize]);
+    const groups = connectedWords.get(groupSize);
+    if (!groups) return;
 
-  useEffect(resetGame, [itemCount, groupSize, resetGame]);
+    // Shuffle and select a subset of groups for the game
+    const shuffledGroups = [...groups].sort(() => 0.5 - Math.random());
+    const selectedGroups = shuffledGroups.slice(0, itemCount);
+
+    // Flatten and shuffle all items
+    const flatItems = selectedGroups.flat();
+    const shuffledItems = flatItems.sort(() => 0.5 - Math.random());
+
+    setItemGroups(selectedGroups);
+    setAllItems(shuffledItems);
+  }, [groupSize, itemCount]);
+
+  // Initial reset and reset on configuration change
+  useEffect(() => {
+    resetGame();
+  }, [resetGame]);
 
   return (
-    <>
-      <Leva
-        collapsed
-        hideCopyButton
-        titleBar={{ position: { x: 0, y: 40 }, filter: false, title: 'Config' }}
-        theme={{
-          colors: {
-            highlight1: '#3498db',  
-            highlight2: '#2ecc71',  
-            background: '#2c3e50',  
-            border: '#34495e',     
-          },
-        }}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          zIndex: 9999, 
-          width: '250px',  
-          height: 'auto', 
-        }}
+    <div className={styles.container}>
+      <h1 className={styles.title}>Connect group of {groupSize} words by clicking on related words</h1>
+      <Leva collapsed />
+      <button className={styles.resetButton} onClick={resetGame}>Reset Game</button>
+      <Game
+        allItems={allItems}
+        groupSize={groupSize}
+        columns={columns}
+        itemGroups={itemGroups}
+        resetGame={resetGame}
       />
-
-      <div style={{ marginTop: '80px' }}> {/* Add margin to avoid overlap with Leva panel */}
-        <h3 className={styles.center}>Match groups of {groupSize} words by clicking on related words</h3>
-        <Game itemGroups={itemGroups} allItems={allItems} columns={columns} groupSize={groupSize} />
-        <div className={styles.center}>
-          <button className={styles.reset} onClick={resetGame}>
-            Reset
-          </button>
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
 

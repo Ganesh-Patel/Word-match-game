@@ -1,94 +1,106 @@
 import React, { useState, useEffect, useRef } from 'react';
-import GridUI from './GridUI';
-import { areItemsFromSingleGroup } from './utils/helpers.js'; // Function to check if items are from the same group
+import GridUI from './GridUI'; // Import GridUI component
 import styles from './styles.module.scss';
 
-const StatusOptions = {
-  Success: 'success',
-  Failure: 'failure',
-};
-
-function Game({ itemGroups, allItems, columns, groupSize }) {
-  const [items, setItems] = useState([]);
-  const [attempts, setAttempts] = useState(0);
-  const [status, setStatus] = useState(null);
+const Game = ({ allItems, groupSize, columns, itemGroups, resetGame }) => {
   const [selectedItems, setSelectedItems] = useState([]);
-  const [highlightedItems, setHighlightedItems] = useState([]);
-  const gridUIRef = useRef(null);
+  const [attempts, setAttempts] = useState(0);
+  const [successCount, setSuccessCount] = useState(0);
+  const [failureCount, setFailureCount] = useState(0);
+  const [feedback, setFeedback] = useState(null);
+  const [remainingItems, setRemainingItems] = useState(allItems);
+  const gridUIRef = useRef(null); // Reference for GridUI
 
-  // Reset the game when items change
-  useEffect(() => {
-    setItems(allItems);
-    setAttempts(0);
-    setStatus(null);
-    setSelectedItems([]);
-    setHighlightedItems([]);
-    gridUIRef.current?.clearSelection();
-  }, [allItems]);
+  const handleSelect = (item) => {
+    if (selectedItems.includes(item)) return;
 
-  // Action when a selection is made
-  const onSelection = (selectedItem) => {
-    // Select items only until the group size is reached
-    if (selectedItems.length < groupSize) {
-      setSelectedItems((prevSelected) => [...prevSelected, selectedItem]);
-      gridUIRef.current?.highlightSelected(selectedItem);
-    }
+    const newSelection = [...selectedItems, item];
+    setSelectedItems(newSelection);
 
-    // When the selection reaches the required group size
-    if (selectedItems.length === groupSize - 1) {
-      const newStatus = areItemsFromSingleGroup(itemGroups, [...selectedItems, selectedItem])
-        ? StatusOptions.Success
-        : StatusOptions.Failure;
-      setStatus(newStatus);
-
-      // After selection, check if they belong to the same group
-      const timeoutId = setTimeout(() => unHighlight([...selectedItems, selectedItem], newStatus), 1000);
-
-      // Increase attempts for every selection made
+    if (newSelection.length === groupSize) {
       setAttempts((prev) => prev + 1);
+      const isMatch = itemGroups.some((group) =>
+        group.every((word) => newSelection.includes(word))
+      );
 
-      return () => clearTimeout(timeoutId);
+      if (isMatch) {
+        setSuccessCount((prev) => prev + 1);
+        setFeedback('success');
+        setRemainingItems((prevItems) =>
+          prevItems.filter((i) => !newSelection.includes(i))
+        );
+        setTimeout(() => {
+          setSelectedItems([]);
+          setFeedback(null);
+        }, 1000);
+      } else {
+        setFailureCount((prev) => prev + 1);
+        setFeedback('failure');
+        setTimeout(() => {
+          setSelectedItems([]);
+          setFeedback(null);
+        }, 1000);
+      }
     }
   };
 
-  // Remove the highlighted items and update the game status
-  function unHighlight(itemsForRemoval, status) {
-    if (status === StatusOptions.Success) {
-      setItems((prevItems) => prevItems.filter((item) => !itemsForRemoval.includes(item)));
-    } else {
-      // If failure, highlight the items in red for 1 second
-      setHighlightedItems(itemsForRemoval);
+  useEffect(() => {
+    if (attempts > 0 && remainingItems.length === 0) {
+      setFeedback('completed');
       setTimeout(() => {
-        setHighlightedItems([]);
-        setSelectedItems([]);
-        gridUIRef.current?.clearSelection();
+        resetGame();
+        setFeedback(null);
       }, 1000);
+
     }
-    setStatus(null);
+  }, [remainingItems, attempts]);
+
+  useEffect(() => {
+    // Whenever allItems changes (like after configuration changes), reset the game
+    setRemainingItems(allItems);
     setSelectedItems([]);
-  }
+    setAttempts(0);
+    setSuccessCount(0);
+    setFailureCount(0);
+    setFeedback(null);
+  }, [allItems]);
 
   return (
-    <>
-      {items.length ? (
-        <GridUI
-          items={items}
-          cols={columns}
-          onSelection={onSelection}
-          status={status}
-          selectedItems={selectedItems}
-          highlightedItems={highlightedItems}
-          ref={gridUIRef}
-        />
-      ) : (
-        <p className={styles.center}>Well done! Reset to play again.</p>
-      )}
+    <div>
+      <div className={styles.feedback}>
+        <span>Attempts: {attempts}</span>
+        <span>Successes: {successCount}</span>
+        <span>Failures: {failureCount}</span>
+      </div>
 
-      <p className={styles.center}>
-        Attempts: <strong>{attempts}</strong>
-      </p>
-    </>
+      <div>
+        <div
+          className={styles.grid}
+          style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+        >
+          <GridUI
+            items={remainingItems}
+            cols={columns}
+            onSelection={handleSelect}  // Pass the item selection handler
+            status={feedback}  // Set feedback status (success/failure)
+            selectedItems={selectedItems}  // Pass selected items
+            highlightedItems={selectedItems}  // Highlight selected items
+            ref={gridUIRef}  // Use reference if needed
+          />
+        </div>
+      </div>
+
+      {feedback === 'completed' && (
+        <div className={styles.completedMessage}>
+          <h2>Game Completed!</h2>
+          <p>
+            You finished the game in {attempts} attempts with {successCount}{' '}
+            successes and {failureCount} failures.
+          </p>
+        </div>
+      )}
+    </div>
   );
-}
+};
 
 export default Game;
