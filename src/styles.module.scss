@@ -1,0 +1,35 @@
+.center {
+    text-align: center;
+  }
+  
+  .grid {
+    display: grid;
+    gap: 1rem;
+  }
+  
+  .gridItem {
+    padding: 1rem;
+    background-color: #f0f0f0;
+    text-align: center;
+    cursor: pointer;
+  }
+  
+  .success {
+    background-color: green;
+    color: white;
+  }
+  
+  .failure {
+    background-color: red;
+    color: white;
+  }
+  
+  .reset {
+    margin-top: 2rem;
+    padding: 0.5rem 1rem;
+    background-color: blue;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
