@@ -6,6 +6,7 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    min-width: 100vw;
     background-color: #f4f6f8;
     padding: 20px;
     box-sizing: border-box;
@@ -45,7 +46,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
+  width: 100vw;
   background-color: #3498db;
 }
   
