@@ -4,16 +4,26 @@
   
   .grid {
     display: grid;
-    gap: 1rem;
+    gap: 10px;
   }
   
-  .gridItem {
-    padding: 1rem;
-    background-color: #f0f0f0;
+  .item {
+    padding: 10px;
     text-align: center;
+    background-color: #f0f0f0;
     cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
   }
   
+  .item:hover {
+    background-color: #ccc;
+  }
+  
+  .selected {
+    background-color: #3498db;
+    color: white;
+  }
   .success {
     background-color: green;
     color: white;
