@@ -10,20 +10,29 @@
   .item {
     padding: 10px;
     text-align: center;
-    background-color: #f0f0f0;
+    border: 1px solid #ccc;
     cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-  }
-  
-  .item:hover {
-    background-color: #ccc;
+    transition: all 0.3s ease;
   }
   
   .selected {
-    background-color: #3498db;
+    background-color: green;
     color: white;
   }
+  
+  .highlighted {
+    background-color: red;
+    color: white;
+  }
+  
+  .center {
+    text-align: center;
+  }
+  
+  p {
+    font-size: 18px;
+  }
+  
   .success {
     background-color: green;
     color: white;

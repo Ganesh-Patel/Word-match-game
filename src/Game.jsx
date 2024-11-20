@@ -1,64 +1,72 @@
 import React, { useState, useEffect, useRef } from 'react';
 import GridUI from './GridUI';
-import { areItemsFromSingleGroup } from './utils/helpers';
+import { areItemsFromSingleGroup } from './utils/helpers.js'; // Function to check if items are from the same group
 import styles from './styles.module.scss';
+
+const StatusOptions = {
+  Success: 'success',
+  Failure: 'failure',
+};
 
 function Game({ itemGroups, allItems, columns, groupSize }) {
   const [items, setItems] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);  // Track selected items
   const [attempts, setAttempts] = useState(0);
   const [status, setStatus] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [highlightedItems, setHighlightedItems] = useState([]);
   const gridUIRef = useRef(null);
 
   // Reset the game when items change
   useEffect(() => {
     setItems(allItems);
-    setSelectedItems([]);
     setAttempts(0);
     setStatus(null);
+    setSelectedItems([]);
+    setHighlightedItems([]);
     gridUIRef.current?.clearSelection();
   }, [allItems]);
 
-  // Handle selection of words
-  const onSelection = (selected) => {
-    if (selected.length === groupSize) {
-      setAttempts((prev) => prev + 1);
-      const newStatus = areItemsFromSingleGroup(itemGroups, selected) ? 'success' : 'failure';
+  // Action when a selection is made
+  const onSelection = (selectedItem) => {
+    // Select items only until the group size is reached
+    if (selectedItems.length < groupSize) {
+      setSelectedItems((prevSelected) => [...prevSelected, selectedItem]);
+      gridUIRef.current?.highlightSelected(selectedItem);
+    }
+
+    // When the selection reaches the required group size
+    if (selectedItems.length === groupSize - 1) {
+      const newStatus = areItemsFromSingleGroup(itemGroups, [...selectedItems, selectedItem])
+        ? StatusOptions.Success
+        : StatusOptions.Failure;
       setStatus(newStatus);
 
-      if (newStatus === 'success') {
-        const timeoutId = setTimeout(() => clearSelection(selected), 1000);
-        return () => clearTimeout(timeoutId);
-      } else {
-        // Incorrect selection, reset after 1 second
-        const timeoutId = setTimeout(() => resetSelection(), 1000);
-        return () => clearTimeout(timeoutId);
-      }
+      // After selection, check if they belong to the same group
+      const timeoutId = setTimeout(() => unHighlight([...selectedItems, selectedItem], newStatus), 1000);
+
+      // Increase attempts for every selection made
+      setAttempts((prev) => prev + 1);
+
+      return () => clearTimeout(timeoutId);
     }
   };
 
-  // Reset the selection after incorrect match
-  const resetSelection = () => {
-    setSelectedItems([]);
-    setStatus(null);
-    gridUIRef.current?.clearSelection();
-  };
-
-  // Remove matched pairs from the list after success
-  const clearSelection = (itemsForRemoval) => {
-    setItems((prevItems) => prevItems.filter((item) => !itemsForRemoval.includes(item)));
-    setStatus(null);
-    setSelectedItems([]);
-    gridUIRef.current?.clearSelection();
-  };
-
-  // Handle selection to highlight selected items
-  const handleItemClick = (item) => {
-    if (selectedItems.length < groupSize && !selectedItems.includes(item)) {
-      setSelectedItems((prev) => [...prev, item]);
-      gridUIRef.current?.highlightSelected(item);
+  // Remove the highlighted items and update the game status
+  function unHighlight(itemsForRemoval, status) {
+    if (status === StatusOptions.Success) {
+      setItems((prevItems) => prevItems.filter((item) => !itemsForRemoval.includes(item)));
+    } else {
+      // If failure, highlight the items in red for 1 second
+      setHighlightedItems(itemsForRemoval);
+      setTimeout(() => {
+        setHighlightedItems([]);
+        setSelectedItems([]);
+        gridUIRef.current?.clearSelection();
+      }, 1000);
     }
-  };
+    setStatus(null);
+    setSelectedItems([]);
+  }
 
   return (
     <>
@@ -69,8 +77,8 @@ function Game({ itemGroups, allItems, columns, groupSize }) {
           onSelection={onSelection}
           status={status}
           selectedItems={selectedItems}
+          highlightedItems={highlightedItems}
           ref={gridUIRef}
-          onItemClick={handleItemClick}
         />
       ) : (
         <p className={styles.center}>Well done! Reset to play again.</p>
