@@ -7,6 +7,7 @@ const GridUI = ({ items, cols, onSelection, status, selectedItems, highlightedIt
       className={styles.grid}
       style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
     >
+  
       {items.map((item, index) => (
         <button
           key={index}

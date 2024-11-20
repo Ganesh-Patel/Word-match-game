@@ -26,9 +26,12 @@ const Game = ({ allItems, groupSize, columns, itemGroups, resetGame }) => {
       if (isMatch) {
         setSuccessCount((prev) => prev + 1);
         setFeedback('success');
-        setRemainingItems((prevItems) =>
-          prevItems.filter((i) => !newSelection.includes(i))
-        );
+        setTimeout(()=>{
+          setRemainingItems((prevItems) =>
+            prevItems.filter((i) => !newSelection.includes(i))
+          );
+        },1500)
+      
         setTimeout(() => {
           setSelectedItems([]);
           setFeedback(null);
@@ -50,7 +53,7 @@ const Game = ({ allItems, groupSize, columns, itemGroups, resetGame }) => {
       setTimeout(() => {
         resetGame();
         setFeedback(null);
-      }, 1000);
+      }, 1500);
 
     }
   }, [remainingItems, attempts]);
@@ -73,11 +76,12 @@ const Game = ({ allItems, groupSize, columns, itemGroups, resetGame }) => {
         <span>Failures: {failureCount}</span>
       </div>
 
-      <div>
+      <div  className={styles.gridContainer}>
         <div
           className={styles.grid}
           style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
         >
+          
           <GridUI
             items={remainingItems}
             cols={columns}
@@ -87,6 +91,7 @@ const Game = ({ allItems, groupSize, columns, itemGroups, resetGame }) => {
             highlightedItems={selectedItems}  // Highlight selected items
             ref={gridUIRef}  // Use reference if needed
           />
+       
         </div>
       </div>
 
