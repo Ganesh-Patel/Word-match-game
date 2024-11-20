@@ -16,7 +16,7 @@ An engaging, interactive word-matching game built with React. This project allow
 
 ### Live Demo
 
-[View the live demo here](#)
+[View the live demo here](https://word-match-game-lake.vercel.app/)
 
 ## Getting Started
 
